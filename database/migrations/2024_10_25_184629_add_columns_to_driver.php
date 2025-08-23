@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddColumnsToDriver extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('drivers', function (Blueprint $table) {
+            $table->date('dateOfBirthGregorian')->nullable()->default(null);
+            $table->string('dateOfBirthHijri')->nullable()->default(null);
+            $table->string('carNumber')->nullable()->default(null);
+
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('drivers', function (Blueprint $table) {
+            $table->dropColumn('dateOfBirthGregorian');
+            $table->dropColumn('dateOfBirthHijri');
+            $table->dropColumn('carNumber');
+        });
+    }
+}
