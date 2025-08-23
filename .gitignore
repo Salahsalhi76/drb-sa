@@ -16,3 +16,4 @@ yarn-error.log
 
 /storage/app/public
 public/push-configurations/firebase.json
+public/push-configurations/firebase.json
