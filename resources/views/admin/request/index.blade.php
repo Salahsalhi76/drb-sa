@@ -4,215 +4,245 @@
 
 @section('content')
     <style>
-        .demo-radio-button label {
-            min-width: 100px;
-            margin: 0 0 5px 50px;
+        /* Layout helpers for the filter row */
+        .filters-row {
+            align-items: center; /* vertical centering */
         }
 
-        .modal-header {
-            border-bottom: 2px solid #1e88e5;
+        /* Make each filter cell tidy */
+        .filter-cell {
+            margin-bottom: 10px;
         }
 
-        .modal-title {
-            color: #9c9cdc;
-            font-weight: 700;
+        .filter-cell label {
+            margin-bottom: .25rem;
+            font-weight: 500;
+            white-space: nowrap;
         }
 
-        .request-status h4 {
-            background: blue;
-            padding: 5px 5px 5px 5px;
-            border-radius: 5px;
-            width: 35%;
-            color: white;
-            font-weight: 600;
+        /* Make inputs a bit compact and consistent */
+        .filter-cell .form-control {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.5rem;
         }
 
+        /* Button column: stretch to same height as the tallest control in the row */
+        .actions-col {
+            display: flex;
+            height: 100%;
+            align-items: stretch; /* make inner wrapper fill height */
+        }
+
+        /* Inner wrapper to stack buttons vertically while filling available height */
+        .actions-wrap {
+            display: flex;
+            gap: .5rem;
+            width: 100%;
+            align-items: center;      /* center vertically when height is larger */
+        }
+
+        /* On md+ we’ll stack them to naturally fill height if needed */
+        @media (min-width: 768px) {
+            .actions-wrap {
+                flex-direction: column;
+                justify-content: stretch;
+            }
+        }
+
+        /* Make buttons occupy necessary height & look balanced */
+        .actions-wrap .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem; /* a touch taller */
+            width: 100%;
+            display: flex;
+            align-items: center;      /* center the label vertically inside the button */
+            justify-content: center;
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 767.98px) {
+            .filters-row {
+                align-items: stretch;  /* make cells full width on mobile */
+            }
+            .actions-wrap {
+                flex-direction: row;   /* side-by-side on small screens */
+                justify-content: center;
+            }
+        }
     </style>
 
-    <!-- Start Page content -->
     <section class="content">
         <div class="row">
             <div class="col-12">
                 <div class="box">
-
                     <div class="box-header with-border">
-                        <div class="row text-right">
+                        <!-- Filters & Search -->
+                        <div class="row filters-row g-2">
 
-                            <div class="col-8 col-md-3">
-                                <div class="form-group">
-                                    <input type="text" id="search_keyword" name="search" class="form-control"
+                            <!-- Search -->
+                            <div class="col-12 col-md-3 filter-cell">
+                                <label for="search_keyword">@lang('view_pages.search')</label>
+                                <div class="input-group">
+                                    <input
+                                        type="text"
+                                        id="search_keyword"
+                                        class="form-control"
                                         placeholder="@lang('view_pages.enter_keyword')">
+                                    <button id="search-btn" class="btn btn-primary">
+                                        @lang('view_pages.search')
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="col-4 col-md-2 text-left">
-                                <button id="search" class="btn btn-success btn-outline btn-sm py-2" type="submit">
-                                    @lang('view_pages.search')
-                                </button>
+                            <!-- Trip Status -->
+                            <div class="col-6 col-md-2 filter-cell">
+                                <label for="trip_status">@lang('view_pages.trip_status')</label>
+                                <select id="trip_status" class="form-control">
+                                    <option value="">@lang('view_pages.all')</option>
+                                    <option value="is_completed">@lang('view_pages.completed')</option>
+                                    <option value="is_cancelled">@lang('view_pages.cancelled')</option>
+                                    <option value="is_trip_start">@lang('view_pages.not_yet_started')</option>
+                                </select>
                             </div>
 
-                            <div class="col-md-7 text-center text-md-right">
-                                <button class="btn btn-outline btn-sm btn-danger py-2" type="button" data-toggle="modal"
-                                    data-target="#request-modal">
-                                   @lang('view_pages.filter_requests')
-                                </button>
+                            <!-- Paid Status -->
+                            <div class="col-6 col-md-2 filter-cell">
+                                <label for="is_paid">@lang('view_pages.paid_status')</label>
+                                <select id="is_paid" class="form-control">
+                                    <option value="">@lang('view_pages.all')</option>
+                                    <option value="1">@lang('view_pages.paid')</option>
+                                    <option value="0">@lang('view_pages.unpaid')</option>
+                                </select>
                             </div>
 
-                            {{-- <div class="col-md-7 text-center text-md-right">
-                                <a class="btn btn-outline btn-sm btn-success py-2" href="{{ route('invoice2') }}" type="button">
-                                   @lang('view_pages.Invoice')
-                                </a>
-                            </div> --}}
+                            <!-- Payment Method -->
+                            <div class="col-6 col-md-2 filter-cell">
+                                <label for="payment_opt">@lang('view_pages.payment_option')</label>
+                                <select id="payment_opt" class="form-control">
+                                    <option value="">@lang('view_pages.all')</option>
+                                    <option value="0">@lang('view_pages.card')</option>
+                                    <option value="1">@lang('view_pages.cash')</option>
+                                    <option value="2">@lang('view_pages.wallet')</option>
+                                    <option value="3">@lang('view_pages.cash_wallet')</option>
+                                </select>
+                            </div>
 
-                            {{-- <div class="col-9 text-right">
-                                <a href="{{url('sos/create')}}" class="btn btn-primary btn-sm">
-                        <i class="mdi mdi-plus-circle mr-2"></i>@lang('view_pages.add_sos')</a>
-                        <!--  <a class="btn btn-danger">
-                                    Export</a> -->
-                    </div> --}}
-                        </div>
-                        <!-- <div class="box-controls pull-right">
-                                                <div class="lookup lookup-circle lookup-right">
-                                                  <input type="text" name="s">
-                                                </div>
-                                              </div> -->
-
-                        <!-- Modal -->
-                        <div class="modal fade" id="request-modal">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h4 class="modal-title">@lang('view_pages.filter_request')</h4>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span></button>
-                                    </div>
-                                    <div class="modal-body text-left">
-                                        <div class="request-status">
-                                            <h4>@lang('view_pages.trip_status')</h4>
-                                            <div class="demo-radio-button">
-                                                <input name="trip_status" type="radio" id="is_completed" data-val="1"
-                                                    class="with-gap radio-col-green">
-                                                <label for="is_completed">@lang('view_pages.completed')</label>
-                                                <input name="trip_status" type="radio" id="is_cancelled" data-val="1"
-                                                    class="with-gap radio-col-red">
-                                                <label for="is_cancelled">@lang('view_pages.cancelled')</label>
-                                                <input name="trip_status" type="radio" id="is_trip_start" data-val="0"
-                                                    class="with-gap radio-col-yellow">
-                                                <label for="is_trip_start">@lang('view_pages.not_yet_started')</label>
-                                            </div>
-                                            <h4>@lang('view_pages.paid_status')</h4>
-                                            <div class="demo-radio-button">
-                                                <input name="is_paid" type="radio" id="paid" data-val="1"
-                                                    class="with-gap radio-col-green">
-                                                <label for="paid">@lang('view_pages.paid')</label>
-                                                <input name="is_paid" type="radio" id="unpaid" data-val="0"
-                                                    class="with-gap radio-col-red">
-                                                <label for="unpaid">@lang('view_pages.unpaid')</label>
-                                            </div>
-                                            <h4>@lang('view_pages.payment_option')</h4>
-                                            <div class="demo-radio-button">
-                                                <input name="payment_opt" type="radio" id="card" data-val="0"
-                                                    class="with-gap radio-col-red">
-                                                <label for="card">@lang('view_pages.card')</label>
-                                                <input name="payment_opt" type="radio" id="cash" data-val="1"
-                                                    class="with-gap radio-col-blue">
-                                                <label for="cash">@lang('view_pages.cash')</label>
-                                                <input name="payment_opt" type="radio" id="wallet" data-val="2"
-                                                    class="with-gap radio-col-yellow">
-                                                <label for="wallet">@lang('view_pages.wallet')</label>
-                                                <input name="payment_opt" type="radio" id="wallet_cash" data-val="3"
-                                                    class="with-gap radio-col-deep-purple">
-                                                <label for="wallet_cash">@lang('view_pages.cash_wallet')</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" data-dismiss="modal"
-                                            class="btn btn-success btn-sm float-right filter">@lang('view_pages.apply_filters')</button>
-
-                                        <button type="button" data-dismiss="modal"
-                                            class="btn btn-danger btn-sm resetfilter float-right mr-2">@lang('view_pages.reset_filters')</button>
-                                    </div>
+                            <!-- Apply / Reset (auto-stretch height, centered vertically) -->
+                            <div class="col-12 col-md-3 filter-cell actions-col">
+                                <div class="actions-wrap w-100">
+                                    <button id="apply-filters" class="btn btn-success">
+                                        @lang('view_pages.apply_filters')
+                                    </button>
+                                    <button id="reset-filters" class="btn btn-danger">
+                                        @lang('view_pages.reset_filters')
+                                    </button>
                                 </div>
-                                <!-- /.modal-content -->
                             </div>
-                            <!-- /.modal-dialog -->
                         </div>
-                        <!-- /.modal -->
-
                     </div>
 
-
+                    <!-- Results -->
                     <div id="js-request-partial-target" class="table-responsive">
                         <include-fragment src="requests/fetch">
-                            <span style="text-align: center;font-weight: bold;">@lang('view_pages.loading')</span>
+                            <div style="text-align: center; font-weight: bold; padding: 20px;">
+                                @lang('view_pages.loading')
+                            </div>
                         </include-fragment>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        {{-- </div> --}}
-        <!-- container -->
-
-
-
         <script src="{{ asset('assets/js/fetchdata.min.js') }}"></script>
         <script>
-            var query = '';
-            var search_keyword = '';
+            (function () {
+                let search_keyword = '';
 
-            $(function() {
-                $('body').on('click', '.pagination a', function(e) {
+                // Pagination (preserve filters)
+                document.body.addEventListener('click', function (e) {
+                    const target = e.target.closest('.pagination a');
+                    if (!target) return;
+
                     e.preventDefault();
-                    var url = $(this).attr('href');
-                    $.get(url, $('#search').serialize(), function(data) {
-                        $('#js-request-partial-target').html(data);
-                    });
+                    const url = target.getAttribute('href');
+                    const fullUrl = url + getQueryParams();
+                    fetch(fullUrl)
+                        .then(r => r.text())
+                        .then(html => document.querySelector('#js-request-partial-target').innerHTML = html);
                 });
 
-                $('#search').on('click', function(e) {
+                // Search button
+                document.getElementById('search-btn').addEventListener('click', function (e) {
                     e.preventDefault();
-                    search_keyword = $('#search_keyword').val();
-                    console.log(search_keyword);
-                    fetch('requests/fetch?search=' + search_keyword)
+                    search_keyword = document.getElementById('search_keyword').value.trim();
+                    fetchData();
+                });
+
+                // Search on Enter
+                document.getElementById('search_keyword').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        search_keyword = this.value.trim();
+                        fetchData();
+                    }
+                });
+
+                // Apply Filters
+                document.getElementById('apply-filters').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    // keep current search_keyword (don’t reset)
+                    fetchData();
+                });
+
+                // Reset Filters
+                document.getElementById('reset-filters').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.getElementById('search_keyword').value = '';
+                    document.getElementById('trip_status').value = '';
+                    document.getElementById('is_paid').value = '';
+                    document.getElementById('payment_opt').value = '';
+                    search_keyword = '';
+                    fetchData();
+                });
+
+                function fetchData(pageUrl = 'requests/fetch') {
+                    const params = new URLSearchParams();
+                    if (search_keyword) params.set('search', search_keyword);
+
+                    const tripStatus = document.getElementById('trip_status').value;
+                    const isPaid     = document.getElementById('is_paid').value;
+                    const payOpt     = document.getElementById('payment_opt').value;
+
+                    if (tripStatus) params.set('trip_status', tripStatus);
+                    if (isPaid !== '') params.set('is_paid', isPaid);
+                    if (payOpt !== '') params.set('payment_opt', payOpt);
+
+                    const url = pageUrl + (params.toString() ? '?' + params.toString() : '');
+
+                    fetch(url)
                         .then(response => response.text())
                         .then(html => {
-                            document.querySelector('#js-request-partial-target').innerHTML = html
+                            document.querySelector('#js-request-partial-target').innerHTML = html;
+                        })
+                        .catch(err => {
+                            console.error('Fetch error:', err);
+                            document.querySelector('#js-request-partial-target').innerHTML =
+                                '<div class="text-danger text-center py-3">Failed to load data.</div>';
                         });
-                });
+                }
 
+                function getQueryParams() {
+                    const tripStatus = document.getElementById('trip_status').value;
+                    const isPaid     = document.getElementById('is_paid').value;
+                    const payOpt     = document.getElementById('payment_opt').value;
 
-                $('.filter,.resetfilter').on('click', function() {
-                    let filterColumn = ['trip_status', 'is_paid', 'payment_opt'];
-                    let className = $(this);
-
-                    $.each(filterColumn, function(index, value) {
-                        if (className.hasClass('resetfilter')) {
-                            $('input[name="' + value + '"]').prop('checked', false);
-                            query = '';
-                        } else if ($('input[name="' + value + '"]:checked').attr('id') !=
-                            undefined) {
-                            var activeVal = $('input[name="' + value + '"]:checked').attr(
-                                'data-val');
-
-                            if (value == 'trip_status') {
-                                value = $('input[name="' + value + '"]:checked').attr('id');
-                            }
-
-                            query += value + '=' + activeVal + '&';
-                        }
-                    });
-
-                    fetch('requests/fetch?' + query)
-                        .then(response => response.text())
-                        .then(html => {
-                            document.querySelector('#js-request-partial-target').innerHTML = html
-                        });
-                });
-
-            });
-
+                    let params = '';
+                    if (search_keyword) params += '&search=' + encodeURIComponent(search_keyword);
+                    if (tripStatus) params += '&trip_status=' + encodeURIComponent(tripStatus);
+                    if (isPaid !== '') params += '&is_paid=' + encodeURIComponent(isPaid);
+                    if (payOpt !== '') params += '&payment_opt=' + encodeURIComponent(payOpt);
+                    return params;
+                }
+            })();
         </script>
     @endsection

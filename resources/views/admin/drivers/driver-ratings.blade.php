@@ -1,127 +1,169 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Company page')
+@section('title', 'Driver Ratings')
 
 @section('content')
     <style>
-        .demo-radio-button label {
-            min-width: 100px;
-            margin: 0 0 5px 50px;
+        .rating-filter .btn {
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            margin: 0 4px;
         }
 
+        .rating-filter .btn input {
+            display: none;
+        }
+
+        .search-section {
+            margin-bottom: 15px;
+        }
     </style>
+
     <!-- Start Page content -->
     <section class="content">
-        {{-- <div class="container-fluid"> --}}
-
         <div class="row">
             <div class="col-12">
                 <div class="box">
 
                     <div class="box-header with-border">
-                        <div class="row text-right">
-                            <div class="col-8 col-md-3">
+                        <!-- Search Section -->
+                        <div class="row search-section">
+                            <div class="col-12 col-md-4">
                                 <div class="form-group">
-                                    <div class="controls">
-                                        <input type="text" id="search_keyword" name="search" class="form-control"
-                                            placeholder="@lang('view_pages.enter_keyword')">
-                                    </div>
+                                    <input type="text" id="search_keyword" class="form-control"
+                                           placeholder="@lang('view_pages.enter_keyword')">
                                 </div>
                             </div>
 
-                            <div class="col-2 col-md-1 text-left">
-                                <button id="search" class="btn btn-success btn-outline btn-sm py-2" type="submit">
+                            <div class="col-12 col-md-2">
+                                <button id="search" class="btn btn-success btn-sm py-2">
                                     @lang('view_pages.search')
                                 </button>
                             </div>
-
-                          
-                           
                         </div>
 
-                     
+                        <!-- Rating Filter -->
+                        <div class="row">
+                            <div class="col-12">
+                                <label><strong>@lang('view_pages.filter_by_rating')</strong></label>
+                                <div class="btn-group rating-filter" role="group">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <label class="btn btn-outline-primary btn-sm">
+                                            <input type="radio" name="rating" class="filter" value="{{ $i }}" autocomplete="off">
+                                            {{ $i }} Star
+                                        </label>
+                                    @endfor
+                                    <label class="btn btn-secondary btn-sm">
+                                        <input type="radio" name="rating" class="resetfilter" value="" autocomplete="off">
+                                        All
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    
-                        <div id="drivers-ratings">
-                             <include-fragment src="drivers/fetch/driver-ratings">
-                            <span style="text-align: center;font-weight: bold;"> @lang('view_pages.loading')</span>
+                    <!-- Results Container -->
+                    <div id="drivers-ratings">
+                        <include-fragment src="{{ url('drivers/fetch/driver-ratings') }}">
+                            <div style="text-align: center; font-weight: bold; padding: 20px;">
+                                @lang('view_pages.loading')
+                            </div>
                         </include-fragment>
-
-                        </div>
-
+                    </div>
 
                 </div>
             </div>
         </div>
+    </section>
 
-        {{-- </div> --}}
-        <!-- container -->
+    <script src="{{ asset('assets/js/fetchdata.min.js') }}"></script>
+    <script>
+        var search_keyword = '';
+        var query = '';
 
+        $(function () {
+            // Pagination click
+            $('body').on('click', '.pagination a', function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href');
 
-         <script src="{{ asset('assets/js/fetchdata.min.js') }}"></script>
-        <script>
-            var search_keyword = '';
-            var query = '';
+                let rating = $('input[name="rating"]:checked').val();
+                let extraParams = '?';
+                if (search_keyword) extraParams += 'search=' + encodeURIComponent(search_keyword);
+                if (rating) extraParams += (extraParams === '?' ? '' : '&') + 'rating=' + rating;
 
-            $(function() {
-                $('body').on('click', '.pagination a', function(e) {
-                    e.preventDefault();
-                    var url = $(this).attr('href');
-                    $.get(url, $('#search').serialize(), function(data) {
-                        $('#drivers-ratings').html(data);
-                    });
-                });
-
-                $('#search').on('click', function(e) {
-                    e.preventDefault();
-                    search_keyword = $('#search_keyword').val();
-
-                    fetch('drivers/fetch/driver-ratings?search=' + search_keyword)
-                        .then(response => response.text())
-                        .then(html => {
-                            document.querySelector('#drivers-ratings').innerHTML = html
-                        });
-                });
-
-                $('.filter,.resetfilter').on('click', function() {
-                    let filterColumn = ['active', 'approve', 'available','area'];
-
-                    let className = $(this);
-                    query = '';
-                    $.each(filterColumn, function(index, value) {
-                        if (className.hasClass('resetfilter')) {
-                            $('input[name="' + value + '"]').prop('checked', false);
-                            if(value == 'area') $('#service_location_id').val('all')
-                            query = '';
-                        } else {
-                            if ($('input[name="' + value + '"]:checked').attr('id') != undefined) {
-                                var activeVal = $('input[name="' + value + '"]:checked').attr(
-                                    'data-val');
-
-                                query += value + '=' + activeVal + '&';
-                            }else if (value == 'area') {
-                                var area = $('#service_location_id').val()
-
-                                query += 'area=' + area + '&';
-                            }
-                        }
-                    });
-
-                    fetch('drivers/fetch/driver-ratings?' + query)
-                        .then(response => response.text())
-                        .then(html => {
-                            document.querySelector('#drivers-ratings').innerHTML = html
-                        });
+                $.get(url + extraParams, function (data) {
+                    $('#drivers-ratings').html(data);
                 });
             });
 
-            $(document).on('click', '.sweet-delete', function(e) {
+            // Search button
+            $('#search').on('click', function (e) {
                 e.preventDefault();
+                search_keyword = $('#search_keyword').val();
 
+                let rating = $('input[name="rating"]:checked').val();
+                let ratingQuery = rating ? '&rating=' + rating : '';
+
+                fetch('drivers/fetch/driver-ratings?search=' + encodeURIComponent(search_keyword) + ratingQuery)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.querySelector('#drivers-ratings').innerHTML = html;
+                    });
+            });
+
+            // Filter/Reset buttons (status, area, etc.)
+            $('.filter, .resetfilter').on('click', function () {
+                let filterColumn = ['active', 'approve', 'available', 'area'];
+                let className = $(this);
+                query = '';
+
+                // Add rating filter
+                let rating = $('input[name="rating"]:checked').val();
+                if (rating) {
+                    query += 'rating=' + rating + '&';
+                }
+
+                // Add other filters
+                $.each(filterColumn, function (index, value) {
+                    if (className.hasClass('resetfilter')) {
+                        $('input[name="' + value + '"]').prop('checked', false);
+                        if (value === 'area') {
+                            $('#service_location_id').val('all');
+                        }
+                    } else {
+                        let $input = $('input[name="' + value + '"]:checked');
+                        if ($input.length && $input.attr('id') !== undefined) {
+                            let val = $input.attr('data-val');
+                            query += value + '=' + val + '&';
+                        } else if (value === 'area') {
+                            let area = $('#service_location_id').val();
+                            if (area && area !== 'all') {
+                                query += 'area=' + area + '&';
+                            }
+                        }
+                    }
+                });
+
+                // Remove trailing &
+                if (query.endsWith('&')) {
+                    query = query.slice(0, -1);
+                }
+
+                fetch('drivers/fetch/driver-ratings?' + query)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.querySelector('#drivers-ratings').innerHTML = html;
+                    });
+            });
+
+            // Sweet delete confirmation
+            $(document).on('click', '.sweet-delete', function (e) {
+                e.preventDefault();
                 let url = $(this).attr('data-url');
                 swal({
-                    title: "Are you sure to delete ?",
+                    title: "Are you sure to delete?",
                     type: "error",
                     showCancelButton: true,
                     confirmButtonColor: "#DD6B55",
@@ -129,20 +171,18 @@
                     cancelButtonText: "No! Keep it",
                     closeOnConfirm: false,
                     closeOnCancel: true
-                }, function(isConfirm) {
+                }, function (isConfirm) {
                     if (isConfirm) {
                         swal.close();
-
                         $.ajax({
                             url: url,
-                            cache: false,
-                            success: function(res) {
-
-                                fetch('drivers/fetch/driver-ratings?search=' + search_keyword + '&' + query)
+                            success: function (res) {
+                                let rating = $('input[name="rating"]:checked').val();
+                                let ratingQuery = rating ? '&rating=' + rating : '';
+                                fetch('drivers/fetch/driver-ratings?search=' + encodeURIComponent(search_keyword) + ratingQuery)
                                     .then(response => response.text())
                                     .then(html => {
-                                        document.querySelector('#drivers-ratings')
-                                            .innerHTML = html
+                                        document.querySelector('#drivers-ratings').innerHTML = html;
                                     });
 
                                 $.toast({
@@ -159,67 +199,6 @@
                     }
                 });
             });
-
-
-            $(document).on('click', '.decline', function(e) {
-                e.preventDefault();
-                var button = $(this);
-                var inpVal = button.attr('data-reason');
-                var driver_id = button.attr('data-id');
-                var redirect = button.attr('href')
-
-                if (inpVal == '-') {
-                    inpVal = '';
-                }
-
-                swal({
-                        title: "",
-                        text: "Reason for Decline",
-                        type: "input",
-                        showCancelButton: true,
-                        closeOnConfirm: false,
-                        confirmButtonText: 'Decline',
-                        cancelButtonText: 'Close',
-                        confirmButtonColor: '#fc4b6c',
-                        confirmButtonBorderColor: '#fc4b6c',
-                        animation: "slide-from-top",
-                        inputPlaceholder: "Enter Reason for Decline",
-                        inputValue: inpVal
-                    },
-                    function(inputValue) {
-                        if (inputValue === false) return false;
-
-                        if (inputValue === "") {
-                            swal.showInputError("Reason is required!");
-                            return false
-                        }
-
-                        $.ajax({
-                            url: '{{ route('UpdateDriverDeclineReason') }}',
-                            data: {
-                                "_token": "{{ csrf_token() }}",
-                                'reason': inputValue,
-                                'id': driver_id
-                            },
-                            method: 'post',
-                            success: function(res) {
-                                if (res == 'success') {
-                                    window.location.href = redirect;
-
-                                    swal.close();
-                                }
-                            }
-                        });
-                    });
-            });
-
-            $(function() {
-  $('table.container').on("click", "tr.table-tr", function() {
-        e.preventDefault();
-    window.location = $(this).data("url");
-    alert($(this).data("url"));
-  });
-});
-
-        </script>
-    @endsection
+        });
+    </script>
+@endsection

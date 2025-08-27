@@ -23,9 +23,15 @@
     <span style="float: right;">
     </span>
     </th>
+
     <th> @lang('view_pages.address')
     <span style="float: right;">
     </span>
+
+       <th> @lang('view_pages.number_of_rides')
+    <span style="float: right;">
+    </span>
+
     </th>
     <th> @lang('view_pages.status')
     <span style="float: right;">
@@ -58,6 +64,7 @@
         <td>{{$result->mobile}}</td>
     @endif
     <td>{{$result->userDetails ? $result->userDetails->address : '-'}}</td>
+    <td>{{ $result->number_of_rides }}</td>
     @if($result->active)
     <td><span class="label label-success">@lang('view_pages.active')</span></td>
     @else

@@ -188,6 +188,117 @@
                     </div>
                 </div>
             </div>
+
+
+
+            {{-- Blocked Drivers --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-3.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.blocked_drivers')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-danger">
+        {{ $blockedDrivers }}
+      </div>
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('drivers/deleted_drivers') }}">
+        @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{{-- Withdrawal Requests (pending) --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-2.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.withdrawal_requests') <span class="badge badge-soft-warning rounded-pill ml-2">@lang('view_pages.pending')</span></h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-warning">
+        {{ $withdrawalRequests }}
+      </div>
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('payouts/requests?status=pending') }}">
+        @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{{-- Cancellation Rate per Captain (overall %) --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-1.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.cancellation_rate_per_captain')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-danger">
+        {{ number_format($cancellationRatePerCaptain, 2) }}%
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- Number of paid trips --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-2.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.paid_trips')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-success">
+        {{ $paidTrips }}
+      </div>
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?payment=paid') }}">
+        @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{{-- Number of unpaid trips --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-3.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.unpaid_trips')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-red">
+        {{ $unpaidTrips }}
+      </div>
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?payment=unpaid') }}">
+        @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{{-- Average customer wait time (minutes) --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-1.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.avg_customer_wait_time')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-warning">
+        {{ number_format($avgCustomerWaitMins, 1) }} @lang('view_pages.minutes')
+      </div>
+       </a>
+    </div>
+  </div>
+</div>
+
+{{-- Captain offers usage (% of trips) --}}
+<div class="col-sm-6 col-md-3">
+  <div class="card overflow-hidden" style="min-width: 12rem">
+    <div class="bg-holder bg-card" style="background-image:url({{ asset('assets/images/corner-2.png') }});"></div>
+    <div class="card-body position-relative">
+      <h6>@lang('view_pages.captain_offers_usage')</h6>
+      <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-success">
+        {{ number_format($captainOffersUsage, 2) }}%
+      </div>
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('offers?used_offer=1') }}">
+        @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+
         </div>
 
         @if(!auth()->user()->hasRole('owner'))

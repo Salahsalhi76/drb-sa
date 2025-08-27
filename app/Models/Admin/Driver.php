@@ -341,7 +341,7 @@ class Driver extends Model
     public function rating($user_id)
     {
         $rate =  User::where('id', $user_id)->first();
-        return $rate->rating;
+        return $rate?->rating ?? 0;
     }
 
     public function enabledRoutes()
@@ -359,4 +359,9 @@ class Driver extends Model
     {
         return $this->belongsTo(Country::class, 'country', 'id');
     }
+
+    public function rejectedRequests()
+{
+    return $this->hasMany(\App\Models\Request\DriverRejectedRequest::class, 'driver_id', 'id');
+}
 }

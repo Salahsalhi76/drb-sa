@@ -29,5 +29,15 @@ class DriverRejectedRequest extends Model
     public $includes = [
 
     ];
+
+        public function request()
+    {
+        return $this->belongsTo(\App\Models\Request\Request::class, 'request_id');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(\App\Models\Admin\Driver::class, 'driver_id');
+    }
 }
 

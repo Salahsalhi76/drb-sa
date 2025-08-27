@@ -44,6 +44,7 @@ use App\Jobs\Notifications\SendPushNotification;
 use App\Models\Admin\DriverVehicleType;
 use App\Models\Chat;
 use Config;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @resource Driver
@@ -111,29 +112,43 @@ class DriverController extends BaseController
         return view('admin.drivers.index', compact('page', 'main_menu', 'sub_menu','services', 'approved'));
     }
 
-    /**
-    * Fetch approved drivers
-    */
-    public function getApprovedDrivers(QueryFilterContract $queryFilter)
-    {
-        $app_for = config('app.app_for');
-        if (access()->hasRole(RoleSlug::SUPER_ADMIN)) {
-                $query = Driver::where('approve', true)->where('owner_id', null)->orderBy('created_at', 'desc');
-                if (env('APP_FOR')=='demo') {
-                    $query = Driver::where('approve', true)->where('owner_id', null)->whereHas('user', function ($query) {
-                        $query->whereCompanyKey(auth()->user()->company_key);
-                    })->orderBy('created_at', 'desc');
-                }
-            } else {
-                $this->validateAdmin();
-                $query = $this->driver->where('approve', true)->where('owner_id', null)->where('service_location_id', auth()->user()->admin->service_location_id)->orderBy('created_at', 'desc');
-                // $query = Driver::orderBy('created_at', 'desc');
-            }
-            $results = $queryFilter->builder($query)->customFilter(new DriverFilter)->paginate();
 
-            return view('admin.drivers._drivers', compact('results','app_for'))->render();
 
+public function getApprovedDrivers(QueryFilterContract $queryFilter)
+{
+    $app_for = config('app.app_for');
+
+    // Base query
+    $query = Driver::where('approve', true)->where('owner_id', null);
+
+    if (access()->hasRole(RoleSlug::SUPER_ADMIN)) {
+        if (env('APP_FOR') == 'demo') {
+            $query->whereHas('user', function ($q) {
+                $q->where('company_key', auth()->user()->company_key);
+            });
+        }
+    } else {
+        $this->validateAdmin();
+        $query->where('service_location_id', auth()->user()->admin->service_location_id);
     }
+
+    // Add counts
+    $query->withCount([
+        'requestDetail as canceled_by_driver_count' => function ($q) {
+            $q->where('is_cancelled', 1)->where('cancel_method', '2');
+        },
+        'rejectedRequests as rejected_by_driver_count'
+    ])
+    ->with('user');
+
+    // Apply QueryFilter and get results
+    $results = $queryFilter->builder($query)->customFilter(new DriverFilter)->paginate();
+
+    // Now sort the collection (not the query) if needed
+    // But better: let QueryFilter handle sorting via ?sort_by= and ?sort_dir=
+    return view('admin.drivers._drivers', compact('results', 'app_for'))->render();
+}
+
     public function approvalPending()
     {
         $page = trans('pages_names.drivers');
@@ -657,18 +672,33 @@ class DriverController extends BaseController
         return view('admin.drivers.driver-ratings', compact('page', 'main_menu', 'sub_menu'));
 
     }
+public function fetchDriverRatings(QueryFilterContract $queryFilter)
+{
+    $app_for = config('app.app_for');
 
-    public function fetchDriverRatings(QueryFilterContract $queryFilter){
-        $app_for = config('app.app_for');
+    // Start with Driver + User relationship
+    $query = Driver::with('user')
+                   ->join('users', 'drivers.user_id', '=', 'users.id');
 
-        $query = Driver::query();
-
-        $results = $queryFilter->builder($query)->customFilter(new DriverFilter)->paginate();
-
-
-        return view('admin.drivers._driver-ratings', compact('results','app_for'))->render();
-
+    // Filter by average rating (1 to 5 stars)
+    if (request()->filled('rating')) {
+        $rating = (int) request('rating');
+        // Match users whose rating is in [rating, rating+1)
+        $query->where('users.rating', '>=', $rating)
+              ->where('users.rating', '<', $rating + 1);
     }
+
+    // Apply search and other filters (active, approve, etc.)
+    $results = $queryFilter->builder($query)->customFilter(new DriverFilter)->paginate();
+
+    // Add average_rating attribute for consistency
+    $results->getCollection()->transform(function ($driver) {
+        $driver->average_rating = round($driver->user->rating ?? 0, 1);
+        return $driver;
+    });
+
+    return view('admin.drivers._driver-ratings', compact('results', 'app_for'))->render();
+}
 
     public function driverRatingView(Driver $driver)
     {

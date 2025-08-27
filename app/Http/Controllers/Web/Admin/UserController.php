@@ -81,16 +81,22 @@ class UserController extends BaseController
         return view('admin.users.index', compact('page', 'main_menu', 'sub_menu'));
     }
 
-    public function getAllUser(QueryFilterContract $queryFilter)
-    {
-        $url = request()->fullUrl(); //get full url
+public function getAllUser(QueryFilterContract $queryFilter)
+{
+    $url = request()->fullUrl(); // get full url
 
-        $query = User::where('is_deleted_at', null)->belongsToRole(RoleSlug::USER);
-        $results = $queryFilter->builder($query)->customFilter(new CommonMasterFilter)->paginate();
+    $query = User::where('is_deleted_at', null)
+        ->belongsToRole(RoleSlug::USER)
+        ->with('userDetails') // if needed in view
+        ->withCount(['requests as number_of_rides' => function ($q) {
+            $q->where('is_completed', 1)->companyKey();
+        }])
+        ->orderByDesc('number_of_rides');
 
-        return view('admin.users._user', compact('results'));
-    }
+    $results = $queryFilter->builder($query)->customFilter(new CommonMasterFilter)->paginate();
 
+    return view('admin.users._user', compact('results'));
+}
 
     public function indexDeleted()
     {

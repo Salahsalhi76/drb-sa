@@ -355,6 +355,13 @@ class User extends Authenticatable implements CanSendOTPContract
     {
         return $this->hasOne(Owner::class, 'user_id', 'id');
     }
-
+public function requests()
+{
+    return $this->hasMany(Request::class, 'user_id');
+}
+    public function getNumberOfRidesAttribute()
+{
+    return $this->requests()->where('is_completed', 1)->count();
+}
 
 }

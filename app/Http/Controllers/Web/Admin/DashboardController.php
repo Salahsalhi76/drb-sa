@@ -244,6 +244,96 @@ class DashboardController extends BaseController
         // $currency = auth()->user()->countryDetail->currency_code ?: env('SYSTEM_DEFAULT_CURRENCY');
         $currency = get_settings('currency_code');
 
-        return view('admin.dashboard', compact('page', 'main_menu','currency', 'sub_menu','total_drivers','total_users','trips','todayEarnings','overallEarnings','data','cancelled_trips'));
+
+
+
+        // ---- REAL STATS FROM DATABASE ----
+
+// 1) Blocked Drivers (not approved)
+$blockedDrivers = Driver::onlyTrashed() // This gets only soft-deleted records
+    ->whereHas('user', function ($query) use ($ownerId) {
+        $query->companyKey();
+    })
+    ->when($ownerId, function ($q) use ($ownerId) {
+        $q->where('owner_id', $ownerId);
+    })
+    ->count();
+
+// 2) Withdrawal requests (pending)
+$withdrawalRequests = \App\Models\Payment\WalletWithdrawalRequest::where('status', 0)
+->when($ownerId, function ($q) use ($ownerId) {
+    $q->where('owner_id', $ownerId);
+})
+->count();
+
+// 3) Cancellation rate per captain (percentage)
+$totalDriverTrips = Request::whereNotNull('driver_id')
+    ->when($ownerId, fn($q) => $q->where('owner_id', $ownerId))
+    ->companyKey()
+    ->count();
+
+$cancelledByDriverTrips = Request::where('cancel_method', 2)
+    ->whereNotNull('driver_id')
+    ->when($ownerId, fn($q) => $q->where('owner_id', $ownerId))
+    ->companyKey()
+    ->count();
+
+$cancellationRatePerCaptain = $totalDriverTrips > 0 
+    ? round(($cancelledByDriverTrips / $totalDriverTrips) * 100, 2) 
+    : 0;
+
+// 4) Number of paid trips
+$paidTrips = RequestBill::whereHas('requestDetail', function ($query) use ($ownerId) {
+        $query->where('is_completed', 1);
+        if ($ownerId) {
+            $query->where('owner_id', $ownerId);
+        }
+    })->count();
+
+// 5) Number of unpaid trips
+$unpaidTrips = Request::where('is_completed', 1)
+    ->doesntHave('requestBill')
+    ->when($ownerId, fn($q) => $q->where('owner_id', $ownerId))
+    ->companyKey()
+    ->count();
+
+// 6) Average customer wait time (in minutes)
+// Wait time = arrived_at - accepted_at (after driver accepts, how long to arrive)
+$avgCustomerWaitMins = Request::whereNotNull('accepted_at')
+    ->whereNotNull('arrived_at')
+    ->where('is_cancelled', 0)
+    ->when($ownerId, fn($q) => $q->where('owner_id', $ownerId))
+    ->companyKey()
+    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, accepted_at, arrived_at)) as avg_wait')
+    ->value('avg_wait');
+
+$avgCustomerWaitMins = $avgCustomerWaitMins ? round($avgCustomerWaitMins, 2) : 0;
+
+
+// 7) Captain offers usage (% of trips using offers/bids)
+$totalTripsWithMeta = \App\Models\Request\RequestMeta::when($ownerId, fn($q) => $q->whereHas('requestDetail', fn($r) => $r->where('owner_id', $ownerId)))
+    ->whereHas('requestDetail', fn($q) => $q->companyKey())
+    ->count();
+
+$tripsViaOffers = \App\Models\Request\RequestMeta::where('assign_method', 1)
+    ->when($ownerId, fn($q) => $q->whereHas('requestDetail', fn($r) => $r->where('owner_id', $ownerId)))
+    ->whereHas('requestDetail', fn($q) => $q->companyKey())
+    ->count();
+
+$captainOffersUsage = $totalTripsWithMeta > 0 
+    ? round(($tripsViaOffers / $totalTripsWithMeta) * 100, 2) 
+    : 0;
+
+
+        return view('admin.dashboard', compact('page', 'main_menu','currency', 'sub_menu','total_drivers','total_users','trips','todayEarnings','overallEarnings','data','cancelled_trips',
+     // NEW mocked stats:
+    'blockedDrivers',
+    'withdrawalRequests',
+    'cancellationRatePerCaptain',
+    'paidTrips',
+    'unpaidTrips',
+    'avgCustomerWaitMins',
+    'captainOffersUsage'
+    ));
     }
 }

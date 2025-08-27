@@ -42,6 +42,13 @@ class RequestMeta extends Model
     {
         return $this->belongsTo(Request::class, 'request_id', 'id');
     }
+
+
+    public function requestDetail()
+{
+    return $this->belongsTo(Request::class, 'request_id', 'id');
+}
+
     /**
     * The request that the meta belongs to.
     *
