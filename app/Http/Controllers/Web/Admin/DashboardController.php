@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Web\BaseController;
+use App\Base\Constants\Auth\Role as RoleSlug;
 use App\Models\Admin\Driver;
 use App\Models\Request\Request;
 use App\Models\Request\RequestBill;
@@ -250,7 +251,13 @@ class DashboardController extends BaseController
         // ---- REAL STATS FROM DATABASE ----
 
 // 1) Blocked Drivers (not approved)
-$blockedDrivers = Driver::onlyTrashed() // This gets only soft-deleted records
+$blockedDrivers = User::whereNotNull('is_deleted_at')
+        ->whereHas('roles', function ($query) {
+            $query->where('slug', RoleSlug::DRIVER);
+        })
+        ->count();
+/*
+Driver::onlyTrashed() // This gets only soft-deleted records
     ->whereHas('user', function ($query) use ($ownerId) {
         $query->companyKey();
     })
@@ -258,6 +265,7 @@ $blockedDrivers = Driver::onlyTrashed() // This gets only soft-deleted records
         $q->where('owner_id', $ownerId);
     })
     ->count();
+*/
 
 // 2) Withdrawal requests (pending)
 $withdrawalRequests = \App\Models\Payment\WalletWithdrawalRequest::where('status', 0)
@@ -284,15 +292,14 @@ $cancellationRatePerCaptain = $totalDriverTrips > 0
 
 // 4) Number of paid trips
 $paidTrips = RequestBill::whereHas('requestDetail', function ($query) use ($ownerId) {
-        $query->where('is_completed', 1);
+        //$query->where('is_completed', 1);
         if ($ownerId) {
             $query->where('owner_id', $ownerId);
         }
     })->count();
 
 // 5) Number of unpaid trips
-$unpaidTrips = Request::where('is_completed', 1)
-    ->doesntHave('requestBill')
+$unpaidTrips = Request::doesntHave('requestBill')
     ->when($ownerId, fn($q) => $q->where('owner_id', $ownerId))
     ->companyKey()
     ->count();

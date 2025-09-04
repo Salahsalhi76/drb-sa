@@ -110,8 +110,16 @@
                                 <label for="is_paid">@lang('view_pages.paid_status')</label>
                                 <select id="is_paid" class="form-control">
                                     <option value="">@lang('view_pages.all')</option>
-                                    <option value="1">@lang('view_pages.paid')</option>
-                                    <option value="0">@lang('view_pages.unpaid')</option>
+                                 <!--     <option value="1">@lang('view_pages.paid')</option>-->
+                                   <!--   <option value="0">@lang('view_pages.unpaid')</option>-->
+                                    <option value="1" {{ 
+    request('is_paid') === '1' || 
+    request('is_paid') === 'true' ? 'selected' : '' 
+}}>@lang('view_pages.paid')</option>
+<option value="0" {{ 
+    request('is_paid') === '0' || 
+    request('is_paid') === 'false' ? 'selected' : '' 
+}}>@lang('view_pages.unpaid')</option>  
                                 </select>
                             </div>
 
@@ -193,6 +201,10 @@
                     // keep current search_keyword (don’t reset)
                     fetchData();
                 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetchData();
+});
 
                 // Reset Filters
                 document.getElementById('reset-filters').addEventListener('click', function (e) {

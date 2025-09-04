@@ -216,7 +216,7 @@
       <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-warning">
         {{ $withdrawalRequests }}
       </div>
-      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('payouts/requests?status=pending') }}">
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('withdrawal-requests-lists') }}">
         @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
       </a>
     </div>
@@ -245,7 +245,7 @@
       <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-success">
         {{ $paidTrips }}
       </div>
-      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?payment=paid') }}">
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?is_paid=true') }}">
         @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
       </a>
     </div>
@@ -261,7 +261,7 @@
       <div class="display-4 fs-4 mb-2 font-weight-normal font-sans-serif text-red">
         {{ $unpaidTrips }}
       </div>
-      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?payment=unpaid') }}">
+      <a class="font-weight-semi-bold fs--1 text-nowrap" href="{{ url('requests?is_paid=false') }}">
         @lang('view_pages.see_all')<span class="fa fa-angle-right ml-1" data-fa-transform="down-1"></span>
       </a>
     </div>
